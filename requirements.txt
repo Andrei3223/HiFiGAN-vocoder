@@ -10,6 +10,8 @@ pandas
 wandb
 comet_ml
 hydra-core
+wget
+datasets
 
 black
 isort
