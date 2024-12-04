@@ -39,6 +39,7 @@ def download_ljspeech():
 
 URL_LINK = "https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2"
 
+
 class LJSpeechDataset(BaseDataset):
     def __init__(self, part, data_dir=None, seed=42, val_size=0.2, *args, **kwargs):
         self._seed = seed

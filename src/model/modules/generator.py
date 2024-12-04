@@ -10,7 +10,7 @@ class ResBlock(nn.Module):
             list(
                 nn.Sequential(
                     nn.LeakyReLU(),
-                    # nn.utils.weight_norm ???
+                    # TODO nn.utils.weight_norm ???
                     nn.Conv1d(
                         in_channels=hidden,
                         out_channels=hidden,
