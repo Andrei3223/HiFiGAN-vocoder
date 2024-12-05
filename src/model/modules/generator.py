@@ -73,15 +73,15 @@ class Generator(nn.Module):
                 nn.Sequential(
                     nn.LeakyReLU(),
                     nn.ConvTranspose1d(
-                        channels,
-                        channels // 2,
+                        hidden // (2**i),
+                        hidden // (2 ** (i + 1)),
                         kernel_size=kernel_u,
                         stride=kernel_u // 2,
                         padding=kernel_u // 4,
                     ),
-                    MRF(channels // 2, kernels_mrf, dilations),
+                    MRF(hidden // (2 ** (i + 1)), kernels_mrf, dilations),
                 )
-                for kernel_u in kernels_u
+                for i, kernel_u in enumerate(kernels_u)
             )
         )
         self.out_block = nn.Sequential(

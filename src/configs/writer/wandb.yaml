@@ -1,5 +1,5 @@
 _target_: src.logger.WandBWriter
-project_name: "pytorch_template_asr_example"
+project_name: "test"
 entity: null
 run_name: "testing"
 mode: "online"

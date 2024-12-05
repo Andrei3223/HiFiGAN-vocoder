@@ -8,11 +8,11 @@ from src.model.modules.msd import MSD
 
 
 class HIFIGan(nn.Module):
-    def __init__(self, config, *args, **kwargs) -> None:
+    def __init__(self, generator, mpd, msd, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.generator = Generator(config["generator"])
-        self.mpd = MPD(config["mpd"])
-        self.msd = MSD(config["msd"])
+        self.generator = Generator(**generator)
+        self.mpd = MPD(**mpd)
+        self.msd = MSD(**msd)
 
     def forward(self, mel):
         return self.generator(mel)

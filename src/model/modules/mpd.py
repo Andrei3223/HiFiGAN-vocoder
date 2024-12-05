@@ -6,11 +6,17 @@ from torch.nn.utils import weight_norm
 
 
 class SubDiscriminator(nn.Module):
-    def __init__(self, period, kernel=5, stride=3, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        period,
+        kernel=5,
+        stride=3,
+        channel_sizes=[1, 32, 128, 512, 1024],
+        *args,
+        **kwargs
+    ) -> None:
         super().__init__()
         self._period = period
-
-        channel_sizes = [1, 32, 128, 512, 1024]
         self.conv_blocks = nn.ModuleList(
             [
                 nn.Sequential(
@@ -37,12 +43,16 @@ class SubDiscriminator(nn.Module):
         feat_maps = []
         bs, ch, t_len = x.shape
 
+        # print("sub disc mpd", x.shape)
+        remainder = 0
         if t_len % self._period != 0:
-            remainder = self._period - (t_len % self.period)
+            remainder = self._period - (t_len % self._period)
             x = F.pad(x, (0, remainder), "reflect")
-        x = x.reshape(bs, ch, t_len // self.period, self.period)
+        # print("padded", x.shape)
+        x = x.reshape(bs, ch, (t_len + remainder) // self._period, self._period)
 
-        for module in self.convs:
+        for i, module in enumerate(self.conv_blocks):
+            # print(f"mpd{i}", x.shape)
             x = module(x)
             feat_maps.append(x)
         x = torch.flatten(x, 1)
@@ -50,23 +60,15 @@ class SubDiscriminator(nn.Module):
 
 
 class MPD(nn.Module):
-    def __init__(self,
-                 periods,
-                 kernel,
-                 stride,
-                 channels):
+    def __init__(self, periods, kernel, stride, channels):
         super().__init__()
-        self.blocks = nn.ModuleList([
-                            SubDiscriminator(
-                                p,
-                                kernel,
-                                stride,
-                                channels
-                            )
-                            for p in periods
-                        ])
+        self.blocks = nn.ModuleList(
+            [SubDiscriminator(p, kernel, stride, channels) for p in periods]
+        )
 
     def forward(self, x, x_gen) -> tp.Sequence[tp.List]:
+        x = x.unsqueeze(1)
+        x_gen = x_gen.unsqueeze(1)
         x_outs, x_gen_outs = [], []
         x_feat_maps, x_gen_feat_maps = [], []
         for block in self.blocks:

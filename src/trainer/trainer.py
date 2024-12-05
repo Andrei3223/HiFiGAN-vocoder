@@ -17,12 +17,11 @@ from torch.nn.utils import clip_grad_norm_
 from tqdm.auto import tqdm
 
 
-
-
 class Trainer(BaseTrainer):
     """
     Trainer class. Defines the logic of batch logging and processing.
     """
+
     def __init__(
         self,
         model,
@@ -132,7 +131,7 @@ class Trainer(BaseTrainer):
 
         if config.trainer.get("from_pretrained") is not None:
             self._from_pretrained(config.trainer.get("from_pretrained"))
-        
+
         self.get_mel_spec = MelSpectrogram()
 
     def process_batch(self, batch, metrics: MetricTracker):
@@ -143,22 +142,25 @@ class Trainer(BaseTrainer):
         if self.is_train:
             metric_funcs = self.metrics["train"]
 
-
         wav = batch["audio"]
-        mel = batch["spectogram"]
-
-        wav_gen = self.model.generator(mel)
-        mel_gen = self.get_mel_spec(wav_gen).squeeze(1)
-
+        mel = batch["spectrogram"]
+        print(wav.shape)
+        wav_gen = self.model.generator(mel).squeeze(1)
+        print("gen:", wav_gen.shape)
+        mel_gen = self.get_mel_spec(wav_gen)  # .squeeze(1)
+        print("mel", mel.shape, mel_gen.shape)
         self.optimizer_d.zero_grad()
 
         mpd_outs, mpd_gen_outs, _, _ = self.model.mpd(wav, wav_gen)
         msd_outs, msd_gen_outs, _, _ = self.model.msd(wav, wav_gen)
 
         batch.update(self.criterion_discriminator(mpd_outs, mpd_gen_outs, "mpd"))
-        batch.update(self.criterion_discriminator(msd_outs, msd_gen_outs, "msd")) 
-        
-        discriminator_loss = batch["discriminator_loss_mpd"],  batch["discriminator_loss_msd"]
+        batch.update(self.criterion_discriminator(msd_outs, msd_gen_outs, "msd"))
+
+        discriminator_loss = (
+            batch["discriminator_loss_mpd"],
+            batch["discriminator_loss_msd"],
+        )
 
         if self.is_train:
             discriminator_loss.backward()
@@ -168,8 +170,12 @@ class Trainer(BaseTrainer):
         # Generator
         self.optimizer_g.zero_grad()
 
-        mpd_outs, mpd_gen_outs, mpd_feat_maps, mpd_gen_feat_maps = self.model.mpd(wav, wav_gen)
-        msd_outs, msd_gen_outs, msd_feat_maps, msd_gen_feat_maps = self.model.msd(wav, wav_gen)
+        mpd_outs, mpd_gen_outs, mpd_feat_maps, mpd_gen_feat_maps = self.model.mpd(
+            wav, wav_gen
+        )
+        msd_outs, msd_gen_outs, msd_feat_maps, msd_gen_feat_maps = self.model.msd(
+            wav, wav_gen
+        )
         batch.update(self.criterion_feat_map(mpd_feat_maps, mpd_gen_feat_maps, "mpd"))
         batch.update(self.criterion_feat_map(msd_feat_maps, msd_gen_feat_maps, "msd"))
 
@@ -178,7 +184,13 @@ class Trainer(BaseTrainer):
 
         batch.update(self.criterion_mel(mel, mel_gen))
 
-        generator_loss = batch["mel_loss"] + batch["feat_loss_mpd"] + batch["feat_loss_msd"] + batch["generator_loss_mpd"] + batch["generator_loss_msd"]
+        generator_loss = (
+            batch["mel_loss"]
+            + batch["feat_loss_mpd"]
+            + batch["feat_loss_msd"]
+            + batch["generator_loss_mpd"]
+            + batch["generator_loss_msd"]
+        )
 
         if self.is_train:
             generator_loss.backward()
@@ -187,7 +199,7 @@ class Trainer(BaseTrainer):
 
             self.lr_scheduler_g.step()
             self.lr_scheduler_d.step()
-    
+
         batch["wav_output"] = wav_gen
         batch["generator_loss"] = generator_loss
         batch["discriminator_loss"] = discriminator_loss

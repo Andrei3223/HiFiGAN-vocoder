@@ -41,11 +41,11 @@ def main(config):
     dataloaders, batch_transforms = get_dataloaders(config, text_encoder, device)
 
     # build model architecture, then print to console
-    model = instantiate(config.model, n_tokens=len(text_encoder)).to(device)
+    model = instantiate(config.model).to(device)  # n_tokens=len(text_encoder)
     logger.info(model)
 
     # get function handles of loss and metrics
-    loss_function = instantiate(config.loss_function).to(device)
+    # loss_function = instantiate(config.loss_function).to(device)
 
     metrics = {"train": [], "inference": []}
     for metric_type in ["train", "inference"]:
@@ -56,9 +56,12 @@ def main(config):
             )
 
     # build optimizer, learning rate scheduler
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = instantiate(config.optimizer, params=trainable_params)
-    lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer)
+    trainable_params_g = filter(lambda p: p.requires_grad, model.generator.parameters())
+    trainable_params_d =  list(filter(lambda p: p.requires_grad, model.mpd.parameters())) + list(filter(lambda p: p.requires_grad, model.msd.parameters()))
+    optimizer_d = instantiate(config.optimizer_d, params=trainable_params_g)
+    optimizer_g = instantiate(config.optimizer_g, params=trainable_params_d)
+    lr_scheduler_d = instantiate(config.lr_scheduler_d, optimizer=optimizer_d)
+    lr_scheduler_g = instantiate(config.lr_scheduler_g, optimizer=optimizer_g)
 
     # epoch_len = number of iterations for iteration-based training
     # epoch_len = None or len(dataloader) for epoch-based training
@@ -66,11 +69,12 @@ def main(config):
 
     trainer = Trainer(
         model=model,
-        criterion=loss_function,
         metrics=metrics,
-        optimizer=optimizer,
-        lr_scheduler=lr_scheduler,
-        text_encoder=text_encoder,
+        optimizer_d=optimizer_d,
+        optimizer_g=optimizer_g,
+        lr_scheduler_d=lr_scheduler_d,
+        lr_scheduler_g=lr_scheduler_g,
+        # text_encoder=text_encoder,
         config=config,
         device=device,
         dataloaders=dataloaders,

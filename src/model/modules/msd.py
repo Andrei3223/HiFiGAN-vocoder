@@ -6,28 +6,33 @@ from torch.nn.utils import weight_norm, spectral_norm
 
 
 class SubDiscriminator(nn.Module):
-    def __init__(self,
-                 channels, kernels, strides, groups,
-                 normalizer=weight_norm,
-                 *args, **kwargs) -> None:
+    def __init__(
+        self,
+        channels,
+        kernels,
+        strides,
+        groups,
+        normalizer=weight_norm,
+        *args,
+        **kwargs
+    ) -> None:
         super().__init__()
 
         # channels = [1, 128, 128, 512, 1024, 1024, 1024]
         # kernels [15, 41, 41, 41, 41, 41, 5],
         # strides [1, 2, 2, 4, 4, 1, 1],
         # groups [1, 4, 16, 16, 16, 16, 1],
-        # channels [128, 128, 256, 512, 1024, 1024, 1024]
         self.conv_blocks = nn.ModuleList(
             [
                 nn.Sequential(
                     normalizer(
                         nn.Conv1d(
-                            channels[i-1],
+                            channels[i - 1],
                             channels[i],
-                            kernels[i-1],
-                            strides[i-1],
-                            groups=groups[i-1],
-                            padding=(kernels[i-1] - 1) // 2,
+                            kernels[i - 1],
+                            strides[i - 1],
+                            groups=groups[i - 1],
+                            padding=(kernels[i - 1] - 1) // 2,
                         )
                     ),
                     nn.LeakyReLU(),
@@ -36,9 +41,7 @@ class SubDiscriminator(nn.Module):
             ]
         )
 
-        self.conv_blocks.append(
-            normalizer(nn.Conv2d(kernels[-1], 1, 3, 1, 1))
-        )
+        self.conv_blocks.append(normalizer(nn.Conv2d(kernels[-1], 1, 3, 1, 1)))
 
     def forward(self, x):
         feat_maps = []
@@ -51,19 +54,21 @@ class SubDiscriminator(nn.Module):
 
 
 class MSD(nn.Module):
-    def __init__(self, periods,
-                 channels, kernels, strides, groups,
-                 *args, **kwargs) -> None:
+    def __init__(self, channels, kernels, strides, groups, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.blocks = nn.ModuleList([
-            SubDiscriminator(spectral_norm),
-            SubDiscriminator(),
-            SubDiscriminator()
-        ])
+        self.blocks = nn.ModuleList(
+            [
+                SubDiscriminator(
+                    channels, kernels, strides, groups, normalizer=spectral_norm
+                ),
+                SubDiscriminator(channels, kernels, strides, groups),
+                SubDiscriminator(channels, kernels, strides, groups),
+            ]
+        )
 
         self.pool = nn.AvgPool1d(4, 2, padding=2)
-    
+
     def forward(self, x, x_gen) -> tp.Sequence[tp.List]:
         x_outs, x_gen_outs = [], []
         x_feat_maps, x_gen_feat_maps = [], []

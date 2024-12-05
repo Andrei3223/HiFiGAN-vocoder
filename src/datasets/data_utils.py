@@ -68,10 +68,10 @@ def get_dataloaders(config, text_encoder, device):
     dataloaders = {}
     for dataset_partition in config.datasets.keys():
         # dataset partition init
+        # raise RuntimeWarning(config.datasets[dataset_partition])
         dataset = instantiate(
-            config.datasets[dataset_partition], text_encoder=text_encoder
+            config.datasets[dataset_partition], # text_encoder=text_encoder
         )  # instance transforms are defined inside
-
         assert config.dataloader.batch_size <= len(dataset), (
             f"The batch size ({config.dataloader.batch_size}) cannot "
             f"be larger than the dataset length ({len(dataset)})"
