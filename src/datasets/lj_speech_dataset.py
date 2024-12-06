@@ -54,6 +54,9 @@ class LJSpeechDataset(BaseDataset):
             data_dir = ROOT_PATH / "data" / "datasets" / "ljspeech"
             data_dir.mkdir(exist_ok=True, parents=True)
         self._data_dir = data_dir
+        self._index_dir = data_dir
+        # for kaggle
+        # self._index_dir = "/kaggle/working/HiFiGAN-vocoder"
         self._part = part
         index = self._get_or_load_index(part)
         super().__init__(index, *args, **kwargs)
@@ -74,15 +77,17 @@ class LJSpeechDataset(BaseDataset):
         print("Download and extraction complete!")
 
     def _get_or_load_index(self, part):
-        index_path = Path(self._data_dir) / f"{part}_index.json"
+        index_path = Path(self._index_dir) / f"{part}_index.json"
+        print("index_path", index_path)
         if index_path.exists():
             with index_path.open() as f:
                 index = json.load(f)
             return index
 
         print("Creating indexes")
-        train_path = Path(self._data_dir) / f"train_index.json"
-        val_path = Path(self._data_dir) / f"val_index.json"
+        train_path = Path(self._index_dir) / f"train_index.json"
+        val_path = Path(self._index_dir) / f"val_index.json"
+
         train_index, val_index = self._create_index()
         with train_path.open("w") as f:
             json.dump(train_index, f, indent=2)
