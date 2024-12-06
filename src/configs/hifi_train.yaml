@@ -28,9 +28,9 @@ lambda_fm_loss: 2
 text_encoder:
   _target_: src.text_encoder.CTCTextEncoder
 trainer:
-  log_step: 1
-  n_epochs: 1
-  epoch_len: 20
+  log_step: 120
+  n_epochs: 100
+  epoch_len: 200
   device_tensors: ["audio", "spectrogram"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
