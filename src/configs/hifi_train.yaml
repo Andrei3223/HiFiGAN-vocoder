@@ -2,8 +2,8 @@ defaults:
   - model: hifi_gan
   - writer: wandb
   - metrics: hifi
-  - datasets: example
-  # - datasets: onebatchtest 
+  # - datasets: example
+  - datasets: onebatchtest 
   - dataloader: example
   - transforms: example_only_instance
   - _self_
@@ -11,7 +11,7 @@ optimizer_d:
   _target_: torch.optim.AdamW
   lr: 2e-4
   weight_decay: 1e-2
-  betas: (0.8, 0.99)
+  betas: [0.8, 0.99]
 lr_scheduler_d:
   _target_: torch.optim.lr_scheduler.ExponentialLR
   gamma: 0.999
@@ -19,7 +19,7 @@ optimizer_g:
   _target_: torch.optim.AdamW
   lr: 2e-4
   weight_decay: 1e-2
-  betas: (0.8, 0.99)
+  betas: [0.8, 0.99]
 lr_scheduler_g:
   _target_: torch.optim.lr_scheduler.ExponentialLR
   gamma: 0.999

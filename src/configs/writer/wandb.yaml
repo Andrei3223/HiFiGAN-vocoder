@@ -1,5 +1,5 @@
 _target_: src.logger.WandBWriter
-project_name: "test"
+project_name: "HiFiGan"
 entity: null
 run_name: "testing"
 mode: "online"
