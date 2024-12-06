@@ -148,7 +148,7 @@ class Trainer(BaseTrainer):
         if self.is_train:
             metric_funcs = self.metrics["train"]
 
-        wav = batch["audio"].to(self.device)
+        wav = batch["audio"]
         mel = batch["spectrogram"]
         # print(wav.shape)
         wav_gen = self.model.generator(mel).squeeze(1)
