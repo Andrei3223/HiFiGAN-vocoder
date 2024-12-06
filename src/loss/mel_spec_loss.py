@@ -7,5 +7,5 @@ class MelSpecLoss(torch.nn.L1Loss):
     def forward(
         self, mel_input, mel_generated, **batch
     ) -> Tensor:
-        loss = L1Loss(mel_input, mel_generated)
+        loss = L1Loss()(mel_input, mel_generated)
         return {"mel_loss": loss}

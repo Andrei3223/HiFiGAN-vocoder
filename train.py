@@ -74,6 +74,8 @@ def main(config):
         optimizer_g=optimizer_g,
         lr_scheduler_d=lr_scheduler_d,
         lr_scheduler_g=lr_scheduler_g,
+        lambda_mel_loss= config.get("lambda_mel_loss"),
+        lambda_fm_loss= config.get("lambda_fm_loss"),
         # text_encoder=text_encoder,
         config=config,
         device=device,

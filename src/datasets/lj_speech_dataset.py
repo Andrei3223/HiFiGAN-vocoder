@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 from pathlib import Path
+import random
 
 import torchaudio
 
@@ -44,10 +45,11 @@ URL_LINK = "https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2"
 
 class LJSpeechDataset(BaseDataset):
     def __init__(
-        self, part, data_dir=None, seed=42, val_size=0.2, *args, **kwargs
+        self, part, data_dir=None, seed=42, val_size=0.2, max_wav_len=None, *args, **kwargs
     ) -> None:
         self._seed = seed
         self._val_size = val_size
+        self._max_wav_len = max_wav_len
         if data_dir is None:
             data_dir = ROOT_PATH / "data" / "datasets" / "ljspeech"
             data_dir.mkdir(exist_ok=True, parents=True)
@@ -118,3 +120,25 @@ class LJSpeechDataset(BaseDataset):
         val_idx = np.sort(val_idx)
         index = np.array(index)
         return index[train_idx].tolist(), index[val_idx].tolist()
+    
+    def __getitem__(self, ind):
+        data_dict = self._index[ind]
+        audio_path = data_dict["path"]
+        audio = self.load_audio(audio_path)
+
+        if self._max_wav_len is not None and self._max_wav_len < audio.shape[1]:
+            start_idx = random.randint(0, audio.shape[1] - self._max_wav_len - 1)  
+            audio = audio[:, start_idx:start_idx + self._max_wav_len]
+        # print("get item", audio.shape, self._max_wav_len)    
+        instance_data = {"audio": audio}
+        instance_data = self.preprocess_data(instance_data)
+        spectrogram = self.get_spectrogram(instance_data["audio"])
+
+        instance_data = {
+            "audio": audio,
+            "spectrogram": spectrogram,
+            "audio_path": audio_path,
+        }
+
+        return instance_data
+

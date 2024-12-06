@@ -41,11 +41,12 @@ class SubDiscriminator(nn.Module):
             ]
         )
 
-        self.conv_blocks.append(normalizer(nn.Conv2d(kernels[-1], 1, 3, 1, 1)))
+        self.conv_blocks.append(normalizer(nn.Conv1d(channels[-1], 1, 3, 1, 1)))
 
     def forward(self, x):
         feat_maps = []
         for module in self.conv_blocks:
+            # print("msd sub", x.shape)
             x = module(x)
             feat_maps.append(x)
 
@@ -70,11 +71,15 @@ class MSD(nn.Module):
         self.pool = nn.AvgPool1d(4, 2, padding=2)
 
     def forward(self, x, x_gen) -> tp.Sequence[tp.List]:
+        x = x.unsqueeze(1)
+        x_gen = x_gen.unsqueeze(1)
         x_outs, x_gen_outs = [], []
         x_feat_maps, x_gen_feat_maps = [], []
         for i, block in enumerate(self.blocks):
+            # print("msd", i, x.shape)
             if i > 0:
                 x = self.pool(x)
+                x_gen = self.pool(x_gen)
             out, feat_map = block(x)
             x_outs.append(out)
             x_feat_maps.append(feat_map)

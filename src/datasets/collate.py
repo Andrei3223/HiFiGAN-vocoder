@@ -23,7 +23,7 @@ def collate_fn(dataset_items: list[dict]):
 
     result_batch["audio_path"] = [item["audio_path"] for item in dataset_items]
     result_batch["audio"] = pad_sequence([item["audio"].squeeze(0) for item in dataset_items], batch_first=True)
-
+    # print("collate", result_batch["audio"].shape)
     result_batch["spectrogram"] = pad_sequence([item["spectrogram"].permute(2, 1, 0) for item in dataset_items], batch_first=True).squeeze(-1).permute(0, 2, 1)
     result_batch["spectrogram_length"] = torch.tensor([item["spectrogram"].shape[2] for item in dataset_items])
 

@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 import torch
 from numpy import inf
+from random import shuffle
 
 from src.logger.utils import plot_spectrogram
 from src.datasets.data_utils import inf_loop
@@ -30,6 +31,8 @@ class Trainer(BaseTrainer):
         optimizer_g,
         lr_scheduler_d,
         lr_scheduler_g,
+        lambda_mel_loss,
+        lambda_fm_loss,
         config,
         device,
         dataloaders,
@@ -59,6 +62,9 @@ class Trainer(BaseTrainer):
         self.optimizer_g = optimizer_g
         self.lr_scheduler_d = lr_scheduler_d
         self.lr_scheduler_g = lr_scheduler_g
+
+        self.lambda_mel_loss = lambda_mel_loss
+        self.lambda_fm_loss = lambda_fm_loss
         # self.text_encoder = text_encoder
         self.batch_transforms = batch_transforms
 
@@ -144,23 +150,20 @@ class Trainer(BaseTrainer):
 
         wav = batch["audio"]
         mel = batch["spectrogram"]
-        print(wav.shape)
+        # print(wav.shape)
         wav_gen = self.model.generator(mel).squeeze(1)
-        print("gen:", wav_gen.shape)
+        # print("gen:", wav_gen.shape)
         mel_gen = self.get_mel_spec(wav_gen)  # .squeeze(1)
-        print("mel", mel.shape, mel_gen.shape)
+        # print("mel", mel.shape, mel_gen.shape)
         self.optimizer_d.zero_grad()
 
-        mpd_outs, mpd_gen_outs, _, _ = self.model.mpd(wav, wav_gen)
-        msd_outs, msd_gen_outs, _, _ = self.model.msd(wav, wav_gen)
+        mpd_outs, mpd_gen_outs_gen, _, _ = self.model.mpd(wav, wav_gen.detach())
+        msd_outs, msd_gen_outs_gen, _, _ = self.model.msd(wav, wav_gen.detach())
 
-        batch.update(self.criterion_discriminator(mpd_outs, mpd_gen_outs, "mpd"))
-        batch.update(self.criterion_discriminator(msd_outs, msd_gen_outs, "msd"))
+        batch.update(self.criterion_discriminator(mpd_outs, mpd_gen_outs_gen, "mpd"))
+        batch.update(self.criterion_discriminator(msd_outs, msd_gen_outs_gen, "msd"))
 
-        discriminator_loss = (
-            batch["discriminator_loss_mpd"],
-            batch["discriminator_loss_msd"],
-        )
+        discriminator_loss = batch["discriminator_loss_mpd"] + batch["discriminator_loss_msd"]
 
         if self.is_train:
             discriminator_loss.backward()
@@ -170,13 +173,17 @@ class Trainer(BaseTrainer):
         # Generator
         self.optimizer_g.zero_grad()
 
-        mpd_outs, mpd_gen_outs, mpd_feat_maps, mpd_gen_feat_maps = self.model.mpd(
+        _, mpd_gen_outs, mpd_feat_maps, mpd_gen_feat_maps = self.model.mpd(
             wav, wav_gen
         )
-        msd_outs, msd_gen_outs, msd_feat_maps, msd_gen_feat_maps = self.model.msd(
+        _, msd_gen_outs, msd_feat_maps, msd_gen_feat_maps = self.model.msd(
             wav, wav_gen
         )
+        # print("mpd outs", len(mpd_outs), mpd_outs[0][0].shape, len(mpd_gen_outs), mpd_gen_outs[0][0].shape)
+        # print("mpd feats", len(mpd_feat_maps), mpd_feat_maps[0][0].shape, len(mpd_gen_feat_maps), mpd_gen_feat_maps[0][0].shape)
         batch.update(self.criterion_feat_map(mpd_feat_maps, mpd_gen_feat_maps, "mpd"))
+        # print("msd outs", len(msd_outs), msd_outs[0][0].shape, len(msd_gen_outs), msd_gen_outs[0][0].shape)
+        # print("msd feats", len(msd_feat_maps), msd_feat_maps[0][0].shape, len(msd_gen_feat_maps), msd_gen_feat_maps[0][0].shape)
         batch.update(self.criterion_feat_map(msd_feat_maps, msd_gen_feat_maps, "msd"))
 
         batch.update(self.criterion_generator(mpd_gen_outs, "mpd"))
@@ -185,9 +192,9 @@ class Trainer(BaseTrainer):
         batch.update(self.criterion_mel(mel, mel_gen))
 
         generator_loss = (
-            batch["mel_loss"]
-            + batch["feat_loss_mpd"]
-            + batch["feat_loss_msd"]
+            batch["mel_loss"] * self.lambda_mel_loss
+            + batch["feat_loss_mpd"] * self.lambda_fm_loss
+            + batch["feat_loss_msd"] * self.lambda_fm_loss
             + batch["generator_loss_mpd"]
             + batch["generator_loss_msd"]
         )
@@ -198,7 +205,6 @@ class Trainer(BaseTrainer):
             self.optimizer_g.step()
 
             self.lr_scheduler_g.step()
-            self.lr_scheduler_d.step()
 
         batch["wav_output"] = wav_gen
         batch["generator_loss"] = generator_loss
@@ -239,8 +245,8 @@ class Trainer(BaseTrainer):
             if batch_idx % self.log_step == 0:
                 self.writer.set_step((epoch - 1) * self.epoch_len + batch_idx)
                 self.logger.debug(
-                    "Train Epoch: {} {} Loss: {:.6f}".format(
-                        epoch, self._progress(batch_idx), batch["loss"].item()
+                    "Train Epoch: {} {} generator loss: {:.6f}".format(
+                        epoch, self._progress(batch_idx), batch["generator_loss"].item(),
                     )
                 )
                 self.writer.add_scalar(
@@ -288,13 +294,29 @@ class Trainer(BaseTrainer):
         else:
             # Log Stuff
             self.log_spectrogram(**batch)
-            self.log_predictions(**batch)
+            self.log_audio(batch)
 
     def log_spectrogram(self, spectrogram, **batch):
         spectrogram_for_plot = spectrogram[0].detach().cpu()
         image = plot_spectrogram(spectrogram_for_plot)
         self.writer.add_image("spectrogram", image)
 
-    def log_predictions(self, wav_gen, is_train=True, limit=5, **kwargs):
-        for i, wav in enumerate(wav_gen[:limit]):
-            self._log_audio(wav.squeeze(0), sr=22050, name=str(i + 1))
+    # def log_predictions(self, wav_output, is_train=True, limit=5, **kwargs):
+    #     for i, wav in enumerate(wav_output[:limit]):
+    #         self._log_audio(wav.squeeze(0), sr=22050, name=str(i + 1))
+    
+    def log_audio(self, batch, examples_to_log=8, **kwargs):
+        result = {}
+        examples_to_log = min(examples_to_log, batch['wav_output'].shape[0])
+
+        tuples = list(batch['wav_output'])
+        tuples_input = list(batch['audio'])
+
+        idx = 0
+        for input, out in zip(tuples_input, tuples[:examples_to_log]):
+            result[idx] = {
+                "wav_genereted": self.writer.wandb.Audio(out.squeeze(0).detach().cpu().numpy(), sample_rate=22050),
+                "wav_input": self.writer.wandb.Audio(input.squeeze(0).detach().cpu().numpy(), sample_rate=22050)
+            }
+            idx += 1
+        self.writer.add_table("audio", pd.DataFrame.from_dict(result, orient="index"))
