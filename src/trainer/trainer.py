@@ -168,7 +168,8 @@ class Trainer(BaseTrainer):
 
         if self.is_train:
             discriminator_loss.backward()
-            self._clip_grad_norm()
+            self._clip_grad_norm_mpd()
+            self._clip_grad_norm_msd()
             self.optimizer_d.step()
 
         # Generator
@@ -202,7 +203,7 @@ class Trainer(BaseTrainer):
 
         if self.is_train:
             generator_loss.backward()
-            self._clip_grad_norm()
+            self._clip_grad_norm_generator()
             self.optimizer_g.step()
 
             self.lr_scheduler_g.step()
@@ -321,3 +322,21 @@ class Trainer(BaseTrainer):
             }
             idx += 1
         self.writer.add_table("audio", pd.DataFrame.from_dict(result, orient="index"))
+    
+    def _clip_grad_norm_mpd(self):
+        if self.config["trainer"].get("max_grad_norm_mpd", None) is not None:
+            clip_grad_norm_(
+                self.model.mpd.parameters(), self.config["trainer"]["max_grad_norm_mpd"]
+            )
+    
+    def _clip_grad_norm_msd(self):
+        if self.config["trainer"].get("max_grad_norm_msd", None) is not None:
+            clip_grad_norm_(
+                self.model.msd.parameters(), self.config["trainer"]["max_grad_norm_msd"]
+            )
+    
+    def _clip_grad_norm_generator(self):
+        if self.config["trainer"].get("max_grad_norm_generator", None) is not None:
+            clip_grad_norm_(
+                self.model.generator.parameters(), self.config["trainer"]["max_grad_norm_generator"]
+            )

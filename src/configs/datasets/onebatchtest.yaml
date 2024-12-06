@@ -7,7 +7,7 @@ train:
   max_wav_len: 8192
   target_sr: 22050
   max_audio_length: 20.0
-  limit: 10
+  limit: 16
   instance_transforms: ${transforms.instance_transforms.train}
 val:
   _target_: src.datasets.LJSpeechDataset
@@ -18,5 +18,5 @@ val:
   max_wav_len: 8192
   target_sr: 22050
   max_audio_length: 20.0
-  limit: 10
+  limit: 16
   instance_transforms: ${transforms.instance_transforms.inference}

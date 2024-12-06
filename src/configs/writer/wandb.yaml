@@ -1,8 +1,8 @@
 _target_: src.logger.WandBWriter
 project_name: "HiFiGan"
 entity: null
-run_name: "hifi_v1"
+run_name: "hifi_v1_clip_no_aug"
 mode: "online"
-loss_names: ["generator_loss", "discriminator_loss", "mel_loss"] # which losses to log (useful for multi-loss tasks, s.a. GANs)
+loss_names: ["generator_loss", "discriminator_loss", "mel_loss", "feat_loss_mpd", "feat_loss_msd", "generator_loss_mpd", "generator_loss_msd", "discriminator_loss_mpd", "discriminator_loss_msd"] # which losses to log (useful for multi-loss tasks, s.a. GANs)
 log_checkpoints: False # set to True if you want to log save_dir with checkpoints to W&B
 id_length: 8 # length of the run_id

@@ -31,7 +31,9 @@ trainer:
   log_step: 120
   n_epochs: 100
   epoch_len: 200
-  # max_grad_norm: 100
+  max_grad_norm_mpd: 100
+  max_grad_norm_msd: 100
+  max_grad_norm_generator: 100
   device_tensors: ["audio", "spectrogram"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
