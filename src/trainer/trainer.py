@@ -138,7 +138,7 @@ class Trainer(BaseTrainer):
         if config.trainer.get("from_pretrained") is not None:
             self._from_pretrained(config.trainer.get("from_pretrained"))
 
-        self.get_mel_spec = MelSpectrogram()
+        self.get_mel_spec = MelSpectrogram().to(self.device)
 
     def process_batch(self, batch, metrics: MetricTracker):
         batch = self.move_batch_to_device(batch)
