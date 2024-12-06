@@ -31,7 +31,7 @@ trainer:
   log_step: 1
   n_epochs: 1
   epoch_len: 20
-  device_tensors: ["spectrogram"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["audio", "spectrogram"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: True # if True, will override the previous run with the same name
