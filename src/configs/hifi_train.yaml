@@ -2,8 +2,8 @@ defaults:
   - model: hifi_gan
   - writer: wandb
   - metrics: hifi
-  # - datasets: example
-  - datasets: onebatchtest 
+  - datasets: example
+  # - datasets: onebatchtest 
   - dataloader: example
   - transforms: example_only_instance
   - _self_
