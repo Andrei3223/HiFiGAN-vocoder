@@ -348,6 +348,7 @@ class BaseTrainer:
                 the dataloader with some of the tensors on the device.
         """
         for tensor_for_device in self.cfg_trainer.device_tensors:
+            print(tensor_for_device)
             batch[tensor_for_device] = batch[tensor_for_device].to(self.device)
         return batch
 
@@ -470,8 +471,10 @@ class BaseTrainer:
             "arch": arch,
             "epoch": epoch,
             "state_dict": self.model.state_dict(),
-            "optimizer": self.optimizer.state_dict(),
-            "lr_scheduler": self.lr_scheduler.state_dict(),
+            "optimizer_d": self.optimizer_d.state_dict(),
+            "optimizer_g": self.optimizer_g.state_dict(),
+            "lr_scheduler_g": self.lr_scheduler_g.state_dict(),
+            "lr_scheduler_d": self.lr_scheduler_g.state_dict(),
             "monitor_best": self.mnt_best,
             "config": self.config,
         }
