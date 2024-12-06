@@ -348,7 +348,6 @@ class BaseTrainer:
                 the dataloader with some of the tensors on the device.
         """
         for tensor_for_device in self.cfg_trainer.device_tensors:
-            print(tensor_for_device)
             batch[tensor_for_device] = batch[tensor_for_device].to(self.device)
         return batch
 
