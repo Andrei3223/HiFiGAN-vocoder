@@ -160,6 +160,7 @@ class Trainer(BaseTrainer):
         # print(wav.is_cuda, mel.is_cuda, wav_gen.detach().is_cuda)
         mpd_outs, mpd_gen_outs_gen, _, _ = self.model.mpd(wav, wav_gen.detach())
         msd_outs, msd_gen_outs_gen, _, _ = self.model.msd(wav, wav_gen.detach())
+        # print(mpd_outs[-1][-1].shape, msd_outs[-1][-1].shape)
 
         batch.update(self.criterion_discriminator(mpd_outs, mpd_gen_outs_gen, "mpd"))
         batch.update(self.criterion_discriminator(msd_outs, msd_gen_outs_gen, "msd"))
@@ -171,7 +172,7 @@ class Trainer(BaseTrainer):
             self._clip_grad_norm_mpd()
             self._clip_grad_norm_msd()
             self.optimizer_d.step()
-            self.lr_scheduler_g.step()
+            self.lr_scheduler_d.step()
 
         # Generator
         self.optimizer_g.zero_grad()
@@ -188,7 +189,7 @@ class Trainer(BaseTrainer):
         # print("msd outs", len(msd_outs), msd_outs[0][0].shape, len(msd_gen_outs), msd_gen_outs[0][0].shape)
         # print("msd feats", len(msd_feat_maps), msd_feat_maps[0][0].shape, len(msd_gen_feat_maps), msd_gen_feat_maps[0][0].shape)
         batch.update(self.criterion_feat_map(msd_feat_maps, msd_gen_feat_maps, "msd"))
-
+  
         batch.update(self.criterion_generator(mpd_gen_outs, "mpd"))
         batch.update(self.criterion_generator(msd_gen_outs, "msd"))
 

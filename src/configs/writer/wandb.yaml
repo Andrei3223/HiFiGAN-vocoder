@@ -1,5 +1,6 @@
 _target_: src.logger.WandBWriter
 project_name: "HiFiGan"
+# project_name: "test"
 entity: null
 run_name: "hifi_v1_clip_no_aug"
 mode: "online"
