@@ -157,6 +157,7 @@ class Trainer(BaseTrainer):
         # print("mel", mel.shape, mel_gen.shape)
         self.optimizer_d.zero_grad()
 
+        print(wav.is_cuda, mel.is_cuda, wav_gen.detach().is_cuda)
         mpd_outs, mpd_gen_outs_gen, _, _ = self.model.mpd(wav, wav_gen.detach())
         msd_outs, msd_gen_outs_gen, _, _ = self.model.msd(wav, wav_gen.detach())
 
