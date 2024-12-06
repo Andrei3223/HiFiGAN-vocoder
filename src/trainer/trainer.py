@@ -171,6 +171,7 @@ class Trainer(BaseTrainer):
             self._clip_grad_norm_mpd()
             self._clip_grad_norm_msd()
             self.optimizer_d.step()
+            self.lr_scheduler_g.step()
 
         # Generator
         self.optimizer_g.zero_grad()
@@ -205,7 +206,6 @@ class Trainer(BaseTrainer):
             generator_loss.backward()
             self._clip_grad_norm_generator()
             self.optimizer_g.step()
-
             self.lr_scheduler_g.step()
 
         batch["wav_output"] = wav_gen
