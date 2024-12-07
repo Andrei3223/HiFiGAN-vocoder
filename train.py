@@ -58,8 +58,8 @@ def main(config):
     # build optimizer, learning rate scheduler
     trainable_params_g = filter(lambda p: p.requires_grad, model.generator.parameters())
     trainable_params_d =  list(filter(lambda p: p.requires_grad, model.mpd.parameters())) + list(filter(lambda p: p.requires_grad, model.msd.parameters()))
-    optimizer_d = instantiate(config.optimizer_d, params=trainable_params_g)
-    optimizer_g = instantiate(config.optimizer_g, params=trainable_params_d)
+    optimizer_d = instantiate(config.optimizer_d, params=trainable_params_d)
+    optimizer_g = instantiate(config.optimizer_g, params=trainable_params_g)
     lr_scheduler_d = instantiate(config.lr_scheduler_d, optimizer=optimizer_d)
     lr_scheduler_g = instantiate(config.lr_scheduler_g, optimizer=optimizer_g)
 
