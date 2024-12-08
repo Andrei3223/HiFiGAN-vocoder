@@ -1,4 +1,4 @@
-# Automatic Speech Recognition (ASR) with PyTorch
+# HIFI GAN vocoder with PyTorch
 
 <p align="center">
   <a href="#about">About</a> •
@@ -10,9 +10,10 @@
 
 ## About
 
-This repository contains a template for solving ASR task with PyTorch. This template branch is a part of the [HSE DLA course](https://github.com/markovka17/dla) ASR homework. Some parts of the code are missing (or do not follow the most optimal design choices...) and students are required to fill these parts themselves (as well as writing their own models, etc.).
+This repository contains an implementation of HIFI gan for audio generation. This model converts mel spectrogram to `.wav` file. 
 
-See the task assignment [here](https://github.com/markovka17/dla/tree/2024/hw1_asr).
+To generate audio file from text use text to spectrogram models. Like `Tacotron2` (see `txt2mel.py`). You can also generate audio from mel (audio -> mel -> audio) using `inference.py`.
+
 
 ## Installation
 
@@ -64,10 +65,22 @@ python3 train.py -cn=CONFIG_NAME HYDRA_CONFIG_ARGUMENTS
 
 Where `CONFIG_NAME` is a config from `src/configs` and `HYDRA_CONFIG_ARGUMENTS` are optional arguments.
 
-To run inference (evaluate the model or save predictions):
+Or download pretrained model weights:
+
+```bash
+python3 get_model_weights.py
+```
+
+To run inference audio -> mel -> audio (evaluate the model or save predictions. Uses `src/datasets/custom_dir_audio_dataset.py`, see `src/configs/inference.yaml`):
 
 ```bash
 python3 inference.py HYDRA_CONFIG_ARGUMENTS
+```
+
+To run inference text -> audio (evaluate the model or save predictions. Uses `src/datasets/custom_dir_dataset.py`, see `src/configs/inference_text.yaml`):
+
+```bash
+python3 txt2mel.py HYDRA_CONFIG_ARGUMENTS
 ```
 
 ## Credits

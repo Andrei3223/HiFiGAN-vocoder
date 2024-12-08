@@ -71,7 +71,7 @@ class Inferencer(BaseTrainer):
         # path definition
 
         self.save_path = save_path
-        print("save path", save_path)
+        # print("save path", save_path)
         # define metrics
         self.metrics = metrics
         if self.metrics is not None:
@@ -121,26 +121,13 @@ class Inferencer(BaseTrainer):
                 the dataloader (possibly transformed via batch transform)
                 and model outputs.
         """
-        # batch = self.move_batch_to_device(batch)
-        # batch = self.transform_batch(batch)  # transform batch on device -- faster
-
         outputs = self.model(batch)
-        print(outputs.shape)
-
-        # if metrics is not None:
-        #     for met in self.metrics["inference"]:
-        #         metrics.update(met.name, met(**batch))
-
-        # Use if you need to save predictions on disk
 
         wav = outputs.clone().squeeze(1)
 
         output_id = self.current_id
 
-        print("print", self.save_path, wav.shape)
         if self.save_path is not None:
-            # you can use safetensors or other lib here
-            # torch.save(output, self.save_path / part / f"output_{output_id}.pth")
             torchaudio.save(Path(self.save_path) / f"output_{output_id}.wav", wav, 22050)
         self.current_id += 1
         return wav

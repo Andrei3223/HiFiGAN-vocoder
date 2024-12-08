@@ -8,4 +8,4 @@ inferencer:
   device: auto # device name or "auto"
   save_path: "outputs/infer" # any name here or null for default path
   seed: 1
-  from_pretrained: "saved/checkpoint-epoch100.pth" # path to the pretrained model
+  from_pretrained: "models/final_model_weights.pth" # path to the pretrained model

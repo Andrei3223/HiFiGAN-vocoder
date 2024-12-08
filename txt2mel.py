@@ -49,7 +49,7 @@ def main(config):
     )
     i = 0
     for text in dataset:
-        print(text)
+        # print(text)
         text_list = split_text_by_words(text, 15)
         mel_list = []
         for sub_str in text_list:
