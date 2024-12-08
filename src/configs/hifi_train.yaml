@@ -44,3 +44,4 @@ trainer:
   early_stop: ${trainer.n_epochs} # epochs for early stopping
   save_dir: "saved"
   seed: 42
+  # use_generaitor_weight_norm: False
