@@ -12,14 +12,13 @@ class ResBlock(nn.Module):
                 nn.Sequential(
                     nn.LeakyReLU(),
                     # TODO nn.utils.weight_norm ???
-                    nn.utils.weight_norm(
                     nn.Conv1d(
                         in_channels=hidden,
                         out_channels=hidden,
                         kernel_size=kernel,
                         dilation=Dilations[i][j],
                         padding="same",
-                    )),
+                    ),
                 )
                 for i in range(len(Dilations))
                 for j in range(len(Dilations[i]))
@@ -66,24 +65,21 @@ class Generator(nn.Module):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        self.in_block = nn.utils.weight_norm(
-            nn.Conv1d(
+        self.in_block = nn.Conv1d(
                 channels, hidden, kernel_size=7, dilation=1, padding="same"
             )
-        )
+
 
         self.mrf_blocks = nn.Sequential(
             *list(
                 nn.Sequential(
                     nn.LeakyReLU(),
-                    nn.utils.weight_norm(
-                        nn.ConvTranspose1d(
-                            hidden // (2**i),
-                            hidden // (2 ** (i + 1)),
-                            kernel_size=kernel_u,
-                            stride=kernel_u // 2,
-                            padding=kernel_u // 4,
-                        )
+                    nn.ConvTranspose1d(
+                        hidden // (2**i),
+                        hidden // (2 ** (i + 1)),
+                        kernel_size=kernel_u,
+                        stride=kernel_u // 2,
+                        padding=kernel_u // 4,
                     ),
                     MRF(hidden // (2 ** (i + 1)), kernels_mrf, dilations),
                 )
