@@ -3,6 +3,8 @@ from tqdm.auto import tqdm
 
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
+import torchaudio
+from pathlib import Path
 
 
 class Inferencer(BaseTrainer):
@@ -19,8 +21,9 @@ class Inferencer(BaseTrainer):
         model,
         config,
         device,
-        dataloaders,
-        text_encoder,
+        dataset,
+        # dataloaders,
+        # text_encoder,
         save_path,
         metrics=None,
         batch_transforms=None,
@@ -61,15 +64,14 @@ class Inferencer(BaseTrainer):
         self.model = model
         self.batch_transforms = batch_transforms
 
-        self.text_encoder = text_encoder
 
         # define dataloaders
-        self.evaluation_dataloaders = {k: v for k, v in dataloaders.items()}
+        self.evaluation_dataloaders = dataset
 
         # path definition
 
         self.save_path = save_path
-
+        print("save path", save_path)
         # define metrics
         self.metrics = metrics
         if self.metrics is not None:
@@ -83,6 +85,7 @@ class Inferencer(BaseTrainer):
         if not skip_model_load:
             # init model
             self._from_pretrained(config.inferencer.get("from_pretrained"))
+        self.current_id = 0
 
     def run_inference(self):
         """
@@ -92,11 +95,9 @@ class Inferencer(BaseTrainer):
             part_logs (dict): part_logs[part_name] contains logs
                 for the part_name partition.
         """
-        part_logs = {}
-        for part, dataloader in self.evaluation_dataloaders.items():
-            logs = self._inference_part(part, dataloader)
-            part_logs[part] = logs
-        return part_logs
+        for dataloader in self.evaluation_dataloaders:
+            logs = self._inference_part("eval", dataloader)
+        return logs
 
     def process_batch(self, batch_idx, batch, metrics, part):
         """
@@ -120,44 +121,29 @@ class Inferencer(BaseTrainer):
                 the dataloader (possibly transformed via batch transform)
                 and model outputs.
         """
-        # TODO change inference logic so it suits ASR assignment
-        # and task pipeline
+        # batch = self.move_batch_to_device(batch)
+        # batch = self.transform_batch(batch)  # transform batch on device -- faster
 
-        batch = self.move_batch_to_device(batch)
-        batch = self.transform_batch(batch)  # transform batch on device -- faster
+        outputs = self.model(batch)
+        print(outputs.shape)
 
-        outputs = self.model(**batch)
-        batch.update(outputs)
+        # if metrics is not None:
+        #     for met in self.metrics["inference"]:
+        #         metrics.update(met.name, met(**batch))
 
-        if metrics is not None:
-            for met in self.metrics["inference"]:
-                metrics.update(met.name, met(**batch))
-
-        # Some saving logic. This is an example
         # Use if you need to save predictions on disk
 
-        batch_size = batch["logits"].shape[0]
-        current_id = batch_idx * batch_size
+        wav = outputs.clone().squeeze(1)
 
-        for i in range(batch_size):
-            # clone because of
-            # https://github.com/pytorch/pytorch/issues/1995
-            logits = batch["logits"][i].clone()
-            label = batch["labels"][i].clone()
-            pred_label = logits.argmax(dim=-1)
+        output_id = self.current_id
 
-            output_id = current_id + i
-
-            output = {
-                "pred_label": pred_label,
-                "label": label,
-            }
-
-            if self.save_path is not None:
-                # you can use safetensors or other lib here
-                torch.save(output, self.save_path / part / f"output_{output_id}.pth")
-
-        return batch
+        print("print", self.save_path, wav.shape)
+        if self.save_path is not None:
+            # you can use safetensors or other lib here
+            # torch.save(output, self.save_path / part / f"output_{output_id}.pth")
+            torchaudio.save(Path(self.save_path) / f"output_{output_id}.wav", wav, 22050)
+        self.current_id += 1
+        return wav
 
     def _inference_part(self, part, dataloader):
         """
@@ -173,7 +159,7 @@ class Inferencer(BaseTrainer):
         self.is_train = False
         self.model.eval()
 
-        self.evaluation_metrics.reset()
+        # self.evaluation_metrics.reset()
 
         # create Save dir
         if self.save_path is not None:
@@ -191,5 +177,5 @@ class Inferencer(BaseTrainer):
                     part=part,
                     metrics=self.evaluation_metrics,
                 )
-
-        return self.evaluation_metrics.result()
+        if self.evaluation_metrics:
+            return self.evaluation_metrics.result()

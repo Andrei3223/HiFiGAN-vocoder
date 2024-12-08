@@ -1,0 +1,3 @@
+_target_: src.datasets.CustomDirAudioDataset
+data_dir: "/Users/a-gruzitski/Desktop/uni/HiFiGAN-vocoder/data/datasets/audio_kaledin"
+target_sr: 22050

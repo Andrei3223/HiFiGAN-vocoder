@@ -29,24 +29,22 @@ def main(config):
     else:
         device = config.inferencer.device
 
-    # setup text_encoder
-    text_encoder = instantiate(config.text_encoder)
-
     # setup data_loader instances
     # batch_transforms should be put on device
-    dataloaders, batch_transforms = get_dataloaders(config, text_encoder, device)
+    # dataloaders, batch_transforms = get_dataloaders(config, text_encoder, device)
+    dataset = instantiate(config.datasets)
 
     # build model architecture, then print to console
-    model = instantiate(config.model, n_tokens=len(text_encoder)).to(device)
-    print(model)
+    model = instantiate(config.model).to(device)
+    # print(model)
 
-    # get metrics
-    metrics = {"inference": []}
-    for metric_config in config.metrics.get("inference", []):
-        # use text_encoder in metrics
-        metrics["inference"].append(
-            instantiate(metric_config, text_encoder=text_encoder)
-        )
+    # # get metrics
+    # metrics = {"inference": []}
+    # for metric_config in config.metrics.get("inference", []):
+    #     # use text_encoder in metrics
+    #     metrics["inference"].append(
+    #         instantiate(metric_config)
+    #     )
 
     # save_path for model predictions
     save_path = ROOT_PATH / "data" / "saved" / config.inferencer.save_path
@@ -56,20 +54,14 @@ def main(config):
         model=model,
         config=config,
         device=device,
-        dataloaders=dataloaders,
-        text_encoder=text_encoder,
-        batch_transforms=batch_transforms,
+        dataset=dataset,
         save_path=save_path,
-        metrics=metrics,
+        metrics=None,
         skip_model_load=False,
     )
 
     logs = inferencer.run_inference()
 
-    for part in logs.keys():
-        for key, value in logs[part].items():
-            full_key = part + "_" + key
-            print(f"    {full_key:15s}: {value}")
 
 
 if __name__ == "__main__":

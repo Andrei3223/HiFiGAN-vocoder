@@ -1,0 +1,11 @@
+defaults:
+  - model: hifi_gan
+  - datasets: inference
+  - transforms: example_only_instance
+  - _self_
+inferencer:
+  device_tensors: ["audio"] # which tensors should be on device (ex. GPU)
+  device: auto # device name or "auto"
+  save_path: "outputs/infer" # any name here or null for default path
+  seed: 1
+  from_pretrained: "saved/checkpoint-epoch100.pth" # path to the pretrained model
