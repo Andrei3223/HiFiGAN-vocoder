@@ -16,3 +16,5 @@ datasets
 black
 isort
 pre-commit
+
+speechbrain

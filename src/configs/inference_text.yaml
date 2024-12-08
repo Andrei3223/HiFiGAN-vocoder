@@ -1,0 +1,11 @@
+defaults:
+  - model: hifi_gan
+  # - metrics: example
+  - datasets: custom_text # we do not want to run inference on training data
+  - dataloader: text
+inferencer:
+  device: auto # device name or "auto"
+  save_path: "infer" # any name here, can be a dataset name
+  seed: 42
+  from_pretrained: "saved/checkpoint-epoch65.pth" # path to the pretrained model
+  out_path: "outputs/texts"

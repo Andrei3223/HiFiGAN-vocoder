@@ -2,3 +2,4 @@ from src.datasets.common_voice import CommonVoiceDataset
 from src.datasets.custom_dir_audio_dataset import CustomDirAudioDataset
 from src.datasets.librispeech_dataset import LibrispeechDataset
 from src.datasets.lj_speech_dataset import LJSpeechDataset
+from src.datasets.custom_dir_dataset import CustomDirDataset

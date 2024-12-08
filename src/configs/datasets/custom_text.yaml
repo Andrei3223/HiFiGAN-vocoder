@@ -1,0 +1,2 @@
+_target_: src.datasets.CustomDirDataset
+data_dir: "/Users/a-gruzitski/Desktop/uni/HiFiGAN-vocoder/data/datasets/texts"
