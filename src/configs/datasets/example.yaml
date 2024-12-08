@@ -4,7 +4,7 @@ train:
   # data_dir: "/Users/a-gruzitski/Desktop/uni/HiFiGAN-vocoder/data/datasets/ljspeech"
   data_dir: "/kaggle/input/the-lj-speech-dataset"
   seed: 42
-  val_size: 0.1
+  val_size: 0.08
   max_wav_len: 8192
   target_sr: 22050
   # limit: 10
@@ -15,7 +15,7 @@ val:
   # data_dir: "/Users/a-gruzitski/Desktop/uni/HiFiGAN-vocoder/data/datasets/ljspeech"
   data_dir: "/kaggle/input/the-lj-speech-dataset"
   seed: 42
-  val_size: 0.1
+  val_size: 0.08
   max_wav_len: 8192
   target_sr: 22050
   # limit: 10

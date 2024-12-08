@@ -13,8 +13,9 @@ optimizer_d:
   weight_decay: 1e-2
   betas: [0.8, 0.99]
 lr_scheduler_d:
-  _target_: torch.optim.lr_scheduler.ExponentialLR
+  _target_: torch.optim.lr_scheduler.StepLR
   gamma: 0.999
+  step_size: ${trainer.epoch_len}
 optimizer_g:
   _target_: torch.optim.AdamW
   lr: 2e-4
@@ -28,9 +29,9 @@ lambda_fm_loss: 2
 text_encoder:
   _target_: src.text_encoder.CTCTextEncoder
 trainer:
-  log_step: 120
+  log_step: 100
   n_epochs: 100
-  epoch_len: 200
+  epoch_len: 400
   max_grad_norm_mpd: 100
   max_grad_norm_msd: 100
   max_grad_norm_generator: 100
